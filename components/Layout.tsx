@@ -9,9 +9,9 @@ import {
   Bell, 
   Menu,
   ShieldAlert,
-  Settings,
   Users,
-  List
+  List,
+  ChevronRight
 } from 'lucide-react';
 import { THEME } from '../constants';
 
@@ -31,22 +31,42 @@ export default function Layout({ children }: React.PropsWithChildren) {
   const myNotifications = notifications.filter(n => n.userId === currentUser?.id);
   const unreadCount = myNotifications.filter(n => !n.read).length;
 
-  const NavItem = ({ to, icon: Icon, label, subItem = false }: { to: string; icon: any; label: string; subItem?: boolean }) => {
-    const isActive = location.pathname === to;
+  const NavItem = ({ to, icon: Icon, label, isActiveOverride }: { to: string; icon: any; label: string; isActiveOverride?: boolean }) => {
+    const isActive = isActiveOverride || location.pathname === to;
     return (
       <Link
         to={to}
-        className={`flex items-center space-x-3 ${subItem ? 'pl-11 pr-4 py-2 text-sm' : 'px-4 py-3'} rounded-lg transition-colors mb-1 ${
+        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors mb-1 ${
           isActive 
             ? 'bg-pink-600 text-white shadow-lg' 
             : 'text-slate-300 hover:bg-slate-800 hover:text-white'
         }`}
         onClick={() => setIsSidebarOpen(false)}
       >
-        <Icon size={subItem ? 18 : 20} />
+        <Icon size={20} />
         <span className="font-medium">{label}</span>
       </Link>
     );
+  };
+
+  // Sub menu item component
+  const SubNavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => {
+      const isActive = location.pathname === to;
+      return (
+        <Link
+            to={to}
+            onClick={() => setIsSidebarOpen(false)}
+            className={`flex items-center space-x-3 pl-12 pr-4 py-2 text-sm rounded-lg transition-all relative ${
+                isActive
+                ? 'text-pink-400 font-medium bg-slate-800/50'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/30'
+            }`}
+        >
+            {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-pink-500 rounded-r-full"></div>}
+            <Icon size={16} />
+            <span>{label}</span>
+        </Link>
+      );
   };
 
   return (
@@ -75,22 +95,40 @@ export default function Layout({ children }: React.PropsWithChildren) {
         </div>
 
         <nav className="p-4 mt-4 overflow-y-auto max-h-[calc(100vh-9rem)]">
-          <div className="mb-1">
-             <NavItem to="/" icon={LayoutDashboard} label="ภาพรวม (Dashboard)" />
+          <div className="mb-6">
+             <NavItem to="/" icon={LayoutDashboard} label="ภาพรวม" />
           </div>
 
-          <div className="mt-6">
-             <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-               การจัดการคำขอ
+          <div className="mb-6">
+             <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
+               <span>งานเอกสาร & งบประมาณ</span>
              </div>
-             <NavItem to="/requests" icon={List} label="รายการคำขอทั้งหมด" />
-             <NavItem to="/requests/create" icon={PlusCircle} label="สร้างคำขอใหม่" subItem={true} />
+             
+             {/* Parent Item */}
+             <div className="space-y-1">
+                 {/* Main List */}
+                 <NavItem 
+                    to="/requests" 
+                    icon={FileText} 
+                    label="รายการคำขอทั้งหมด" 
+                    // Keep parent active style if we are on create page (optional, but let's keep them distinct for now)
+                    isActiveOverride={location.pathname === '/requests'}
+                 />
+                 
+                 {/* Sub Menu */}
+                 <div className="mt-1 relative">
+                    {/* Vertical line connector */}
+                    <div className="absolute left-[29px] top-0 bottom-4 w-px bg-slate-800"></div>
+                    
+                    <SubNavItem to="/requests/create" icon={PlusCircle} label="สร้างคำขอใหม่" />
+                 </div>
+             </div>
           </div>
 
           {currentUser?.role === 'ADMIN' && (
-             <div className="mt-6">
+             <div>
                <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                 สำหรับเจ้าหน้าที่
+                 ผู้ดูแลระบบ
                </div>
                <NavItem to="/users" icon={Users} label="จัดการระบบ/ผู้ใช้" />
              </div>
